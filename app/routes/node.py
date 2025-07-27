@@ -70,18 +70,22 @@ async def add_node(new_node: NodeCreate, db: DBDep, admin: SudoAdminDep):
     logger.info("New node `%s` added", db_node.name)
     return db_node
 
+
 @router.post("/{node_id}/restart", response_model=NodeResponse)
 async def restart_node(
         node_id: int,
         db: DBDep,
         admin: SudoAdminDep,
 ):
+    logger.info(f"Received restart request for node ID: {node_id}")
     db_node: DBNode = crud.get_node(db, node_id)
     if not db_node:
+        logger.error(f"Node ID {node_id} not found in database.")
         raise HTTPException(status_code=404, detail="Node not found")
 
     live_node = marznode.nodes.get(node_id)
     if not live_node:
+        logger.error(f"Node ID {node_id} found in DB but is not actively connected.")
         raise HTTPException(status_code=500, detail=f"Node {node_id} is not actively connected.")
 
     try:
@@ -99,6 +103,7 @@ async def restart_node(
                 config=config,
                 config_format=config_format
             )
+        logger.info(f"Successfully sent restart command to all backends for node {node_id}")
 
     except Exception as e:
         logger.error(f"Failed to restart node {node_id}: {e}", exc_info=True)
@@ -106,43 +111,6 @@ async def restart_node(
 
     return db_node
 
-
-@router.post("/{node_id}/restart", response_model=NodeResponse)
-async def restart_node(
-        node_id: int,
-        db: DBDep,
-        admin: SudoAdminDep,
-):
-
-    db_node: DBNode = crud.get_node(db, node_id)
-    if not db_node:
-        raise HTTPException(status_code=404, detail="Node not found")
-
-    live_node = marznode.nodes.get(node_id)
-    if not live_node:
-        raise HTTPException(status_code=500, detail=f"Node {node_id} is not actively connected.")
-
-    try:
-        backends = await live_node._fetch_backends()
-        if not backends:
-            logger.info(f"No backends found to restart for node {node_id}")
-            return db_node
-
-        logger.info(f"Found backends to restart for node {node_id}: {[b.name for b in backends]}")
-
-        for backend in backends:
-            config, config_format = await live_node.get_backend_config(name=backend.name)
-            await live_node.restart_backend(
-                name=backend.name,
-                config=config,
-                config_format=config_format
-            )
-
-    except Exception as e:
-        logger.error(f"Failed to restart node {node_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to send restart command to node.")
-
-    return db_node
 @router.get("/settings", response_model=NodeSettings)
 def get_node_settings(db: DBDep, admin: SudoAdminDep):
     tls = crud.get_tls_certificate(db)
