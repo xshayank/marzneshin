@@ -6,9 +6,13 @@ import {
 } from '@marzneshin/modules/nodes';
 import { EntityTable } from "@marzneshin/libs/entity-table";
 import { useNavigate } from "@tanstack/react-router";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetch } from "@marzneshin/common/utils";
+import { toast } from "sonner";
 
 export const NodesTable: FC = () => {
     const navigate = useNavigate({ from: "/nodes" });
+    const queryClient = useQueryClient();
 
     const onOpen = (entity: NodeType) => {
         navigate({
@@ -31,7 +35,24 @@ export const NodesTable: FC = () => {
         })
     }
 
-    const columns = columnsFn({ onEdit, onDelete, onOpen });
+    const restartMutation = useMutation({
+        mutationFn: (nodeId: number) => fetch(`/nodes/${nodeId}/restart`, { method: 'post' }),
+        onSuccess: (data, nodeId) => {
+            toast.success(`Restart signal sent to node "${data.name}".`);
+            queryClient.invalidateQueries({ queryKey: ['nodes'] });
+            queryClient.invalidateQueries({ queryKey: ['node', nodeId] });
+        },
+        onError: (error: any) => {
+            const errorMessage = error.response?._data?.detail || 'Failed to restart node.';
+            toast.error(errorMessage);
+        },
+    });
+
+    const onRestart = (entity: NodeType) => {
+        restartMutation.mutate(entity.id);
+    }
+
+    const columns = columnsFn({ onEdit, onDelete, onOpen, onRestart });
 
     return (
         <EntityTable
