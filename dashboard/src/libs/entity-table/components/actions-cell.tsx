@@ -12,7 +12,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@marzneshin/common/components"
-import { MoreHorizontal, PencilIcon, TrashIcon } from "lucide-react"
+import { MoreHorizontal, PencilIcon, TrashIcon, Power } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 interface DataTableActionsCellProps<TData>
@@ -21,10 +21,11 @@ interface DataTableActionsCellProps<TData>
     onDelete: (object: TData) => void,
     onEdit: (object: TData) => void,
     onOpen: (object: TData) => void,
+    onRestart?: (object: TData) => void,
 }
 
 export function DataTableActionsCell<TData>({
-    row, onDelete, onEdit, onOpen
+    row, onDelete, onEdit, onOpen, onRestart
 }: DataTableActionsCellProps<TData>) {
     const { t } = useTranslation();
 
@@ -45,6 +46,12 @@ export function DataTableActionsCell<TData>({
                 <DropdownMenuItem data-testid="action-row-edit" onClick={(e) => { e.stopPropagation(); onEdit(row.original) }}>
                     <PencilIcon className="mr-1 w-4 h-4" />    {t('edit')}
                 </DropdownMenuItem>
+                {onRestart && (
+                    <DropdownMenuItem data-testid="action-row-restart" onClick={(e) => { e.stopPropagation(); onRestart(row.original) }}>
+                        <Power className="mr-1 w-4 h-4" /> {t('Restart')}
+                    </DropdownMenuItem>
+                )}
+
                 <DropdownMenuItem data-testid="action-row-delete" onClick={(e) => { e.stopPropagation(); onDelete(row.original) }} className="text-destructive">
                     <TrashIcon className="mr-1 w-4 h-4" />{t('delete')}
                 </DropdownMenuItem>
