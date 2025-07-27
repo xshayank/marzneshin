@@ -10,7 +10,11 @@ import {
 } from "@marzneshin/libs/entity-table";
 import {
     NoPropogationButton,
+    DropdownMenuSeparator,
+    DropdownMenuItem,
 } from "@marzneshin/common/components"
+import { Power } from "lucide-react";
+
 
 export const columns = (actions: ColumnActions<NodeType>): ColumnDef<NodeType>[] => ([
     {
@@ -36,7 +40,17 @@ export const columns = (actions: ColumnActions<NodeType>): ColumnDef<NodeType>[]
         cell: ({ row }) => {
             return (
                 <NoPropogationButton row={row} actions={actions}>
-                    <DataTableActionsCell {...actions} row={row} />
+                    <DataTableActionsCell {...actions} row={row}>
+                        {actions.onRestart && (
+                            <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onSelect={() => actions.onRestart?.(row.original)}>
+                                    <Power className="mr-2 h-4 w-4" />
+                                    <span>{i18n.t('Restart')}</span>
+                                </DropdownMenuItem>
+                            </>
+                        )}
+                    </DataTableActionsCell>
                 </NoPropogationButton>
             );
         },
