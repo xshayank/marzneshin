@@ -78,7 +78,7 @@ async def restart_node(
         admin: SudoAdminDep,
 ):
     logger.info(f"Received restart request for node ID: {node_id}")
-    db_node: DBNode = crud.get_node(db, node_id)
+    db_node: DBNode = crud.get_node_by_id(db, node_id)
     if not db_node:
         logger.error(f"Node ID {node_id} not found in database.")
         raise HTTPException(status_code=404, detail="Node not found")
@@ -110,6 +110,7 @@ async def restart_node(
         raise HTTPException(status_code=500, detail=f"Failed to send restart command to node.")
 
     return db_node
+
 
 @router.get("/settings", response_model=NodeSettings)
 def get_node_settings(db: DBDep, admin: SudoAdminDep):
